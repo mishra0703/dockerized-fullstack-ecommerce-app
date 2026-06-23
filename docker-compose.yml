@@ -6,7 +6,7 @@ services:
     # build:
     #   context: .
     #   dockerfile: Dockerfile
-    image: ${DOCKERHUB_USER}/fullstack-ecommerce:${DOCKER_TAG}
+    image: ${DOCKER_USER}/fullstack-ecommerce:${DOCKER_TAG}
     container_name: mern-ecommerce-app
     restart: unless-stopped
     ports: 
