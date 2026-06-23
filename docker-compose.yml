@@ -3,9 +3,10 @@ name: ecommerce-app
 services:
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    image: ${DOCKERHUB_USER}/fullstack-ecommerce:${DOCKER_TAG}
     container_name: mern-ecommerce-app
     restart: unless-stopped
     ports: 
