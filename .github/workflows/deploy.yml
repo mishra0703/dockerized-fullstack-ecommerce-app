@@ -35,10 +35,7 @@ jobs:
 
           CLIENT_URL=${{ vars.CLIENT_URL }}
           NODE_ENV=production
-          EOF
-      
-      # - name: Docker compose setup
-      #   uses: docker/setup-compose-action@v2
+          EOF      
 
       - name: Deploy with docker compose
         run: docker compose down && docker compose up -d --force-recreate --pull always
