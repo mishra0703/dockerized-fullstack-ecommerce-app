@@ -1,0 +1,90 @@
+name: Build & Test
+
+on:
+    workflow_call: 
+        inputs:
+            node_version:
+                type: number
+                required: true
+                default: 20
+            run_tests:
+                type: boolean
+                default: true
+
+
+jobs:
+    Build_and_Tests_Backend:
+        runs-on: ubuntu-latest                
+        outputs:
+          test_result: ${{ steps.Backend_Testing.outputs.result }}
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Setting up Language Runtine
+              uses: actions/setup-node@v6
+              with:
+                node-version: ${{ inputs.node_version }}
+                cache: 'npm'
+                cache-dependency-path: package-lock.json                
+
+            - name: Installing Dependencies              
+              run: npm ci
+              
+            - name: Running Tests
+              id: Backend_Testing
+              if: inputs.run_tests == true
+              run: |
+                if npm test; then
+                  echo "result=passed" >> "$GITHUB_OUTPUT"
+                else
+                    echo "result=failed" >> "$GITHUB_OUTPUT"
+                    exit 1
+                fi
+
+
+    Build_and_Test_Frontend:
+        runs-on: ubuntu-latest                
+        outputs:
+          test_result: ${{ steps.Frontend_Testing.outputs.result }}
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Setting up Language Runtine
+              uses: actions/setup-node@v6
+              with:
+                node-version: ${{ inputs.node_version }}
+                cache: 'npm'
+                cache-dependency-path: frontend/package-lock.json                
+
+            - name: Installing Dependencies
+              working-directory: frontend/
+              run: npm ci
+              
+            - name: Running Tests
+              id: Frontend_Testing
+              if: inputs.run_tests == true
+              working-directory: frontend/
+              run: |
+                if npm test; then
+                  echo "result=passed" >> "$GITHUB_OUTPUT"
+                else
+                    echo "result=failed" >> "$GITHUB_OUTPUT"
+                    exit 1
+                fi
+            
+
+    Test_Results:
+        needs: [ Build_and_Tests_Backend , Build_and_Test_Frontend]
+        runs-on: ubuntu-latest
+        outputs:
+            Test-Result: ${{ steps.Result.outputs.test_result }}
+        steps:
+            - id: Result
+              run: |
+                if [ "${{ needs.Build_and_Tests_Backend.outputs.test_result }}" == "passed" ] && [ "${{ needs.Build_and_Test_Frontend.outputs.test_result }}" == "passed" ]; then
+                    echo "test_result=passed" >> "$GITHUB_OUTPUT"
+                else
+                    echo "test_result=failed" >> "$GITHUB_OUTPUT"
+                fi
