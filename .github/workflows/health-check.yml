@@ -1,0 +1,90 @@
+name: Scheduled HealthCheck
+
+on:
+    schedule:
+        - cron: '0 */12 * * *'
+    workflow_dispatch: 
+
+
+
+jobs:
+    regular_health_checkup:
+        runs-on: ubuntu-latest
+        services:
+          mongo:
+            image: mongo:7        
+            ports:
+                - 27017:27017
+          redis: 
+            image: redis:7
+            ports:
+                - 6379:6379
+        steps:
+            # - name: Fetch Public IP
+            #   id: ip
+            #   run: |
+            #     PUBLIC_IP=$(curl -s https://ifconfig.me)
+            #     echo "runner_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+            #     echo "The runner's public IP is $PUBLIC_IP"
+
+
+            - name: Creating .env file
+              run: |
+                cat <<EOF > .env
+                MONGO_URI=mongodb://localhost:27017/mern-ecommerce
+                UPSTASH_REDIS_URL=redis://localhost:6379
+
+                ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
+                REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
+
+                CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+                CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+                CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+
+                STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+
+                CLIENT_URL=http://localhost:5000
+                # CLIENT_URL=http://${{ steps.ip.outputs.runner_ip }}:5000
+                NODE_ENV=production
+                EOF
+
+                
+            - name: Pulling Docker Image
+              run: docker pull mishra0703/ecommerce-fullstack-webapp:latest
+
+            - name: Running Container
+              run: |
+                docker run -d --name ecommerce-app \ 
+                --network host \ 
+                --env-file .env \
+                mishra0703/ecommerce-fullstack-webapp:latest
+
+            - name: Wait for boot
+              run: sleep 10
+
+            - name: Health check
+              id: health
+              run: |
+                if curl -f -s http://localhost:5000/ -o /dev/null; then
+                    echo "status=PASSED" >> "$GITHUB_OUTPUT"
+                else
+                    echo "status=FAILED" >> "$GITHUB_OUTPUT"
+                    docker logs ecommerce-app
+                fi
+
+                
+            - name: Summary Report
+              if: always()
+              run: |
+                echo "## Health Check Report" >> $GITHUB_STEP_SUMMARY
+                echo "- Image: mishra0703/ecommerce-fullstack-webapp:latest" >> $GITHUB_STEP_SUMMARY
+                echo "- Status: ${{ steps.health.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+                echo "- Time: $(date)" >> $GITHUB_STEP_SUMMARY
+
+            - name: Fail job if health check failed
+              if: steps.health.outputs.status == 'FAILED'
+              run: exit 1
+
+            - name: Cleanup
+              if: always()
+              run: docker rm -f app-container
