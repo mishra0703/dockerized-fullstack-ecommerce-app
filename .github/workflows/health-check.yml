@@ -53,11 +53,8 @@ jobs:
               run: docker pull mishra0703/ecommerce-fullstack-webapp:latest
 
             - name: Running Container
-              run: |
-                docker run -d --name ecommerce-app \ 
-                --network host \ 
-                --env-file .env \
-                mishra0703/ecommerce-fullstack-webapp:latest
+              run: docker run -d --name ecommerce-app --network host --env-file .env mishra0703/ecommerce-fullstack-webapp:latest
+
 
             - name: Wait for boot
               run: sleep 10
