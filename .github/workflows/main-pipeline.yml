@@ -26,7 +26,7 @@ jobs:
         needs: [build_and_test , getting_short_sha]
         with:
             image_name: "mishra0703/ecommerce-fullstack-webapp"
-            tag: |
+            tags: |
                 mishra0703/ecommerce-fullstack-webapp:latest
                 mishra0703/ecommerce-fullstack-webapp:sha-${{ needs.getting_short_sha.outputs.short_sha }}
         secrets: 
