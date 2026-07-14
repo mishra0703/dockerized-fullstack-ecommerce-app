@@ -1,0 +1,30 @@
+name: CI Pipeline
+
+on:
+    push:
+        branches: [main]
+
+
+jobs:
+    build_and_test:
+        uses: ./.github/workflows/reusable-build-test.yml
+        with:
+            node_version: 20
+            run_tests: true
+
+    docker_image:
+        uses: ./.github/workflows/reusable-docker.yml
+        with:
+            image_name: "mishra0703/ecommerce-fullstack-webapp"
+            tag: "latest , $(git rev-parse --short HEAD)"
+        secrets: 
+            Dockerhub_Username: ${{ vars.DOCKERHUB_USERNAME }}
+            Dockerhub_Token: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    deploy:
+        runs-on: ubuntu-latest        
+        needs: docker_image
+        environment: production
+        steps:
+            - name: Deploying Webapp
+              run: echo "Deploying image --> ${{ needs.docker_image.outputs.image_url }} to production"
