@@ -6,9 +6,9 @@ on:
             image_name:
                 type: string
                 required: true
-            tag:
+            tags:
                 type: string
-                default: latest
+                required: true
         secrets:
             Dockerhub_Username:
                 required: true
@@ -36,8 +36,8 @@ jobs:
               with:
                 context: .
                 push: true
-                tags: ${{ inputs.image_name }}:${{ inputs.tag }}                        
+                tags: ${{ inputs.tags }}                        
 
             - name: Set image_url output
               id: dockerhub_image_url
-              run: echo "image_url=docker.io/${{ inputs.image_name }}:${{ inputs.tag }}" >> "$GITHUB_OUTPUT"                
+              run: echo "image_url=docker.io/${{ inputs.image_name }}:${{ inputs.tags }}" >> "$GITHUB_OUTPUT"                
