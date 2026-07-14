@@ -6,6 +6,15 @@ on:
 
 
 jobs:
+    getting_short_sha:
+        runs-on: ubuntu-latest
+        outputs:
+            short_sha: ${{ steps.vars.outputs.short_sha }}
+        steps:
+            - name: Generating Short SHA
+              id: vars
+              run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
     build_and_test:
         uses: ./.github/workflows/reusable-build-test.yml
         with:
@@ -14,9 +23,10 @@ jobs:
 
     docker_image:
         uses: ./.github/workflows/reusable-docker.yml
+        needs: [build_and_test , getting_short_sha]
         with:
             image_name: "mishra0703/ecommerce-fullstack-webapp"
-            tag: "latest , $(git rev-parse --short HEAD)"
+            tag: "latest , ${{ needs.getting_short_sha.outputs.short_sha }}"
         secrets: 
             Dockerhub_Username: ${{ vars.DOCKERHUB_USERNAME }}
             Dockerhub_Token: ${{ secrets.DOCKERHUB_TOKEN }}
