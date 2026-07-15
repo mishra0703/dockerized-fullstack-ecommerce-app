@@ -28,7 +28,7 @@ jobs:
 
     pr_comment:
         runs-on: ubuntu-latest
-        needs: [build_and_test]
+        needs: [build_and_test , dependency_test]
         steps:
             - name: Prints PR Summary
               run: echo "PR checks passed for branch - ${{ github.head_ref }}"
