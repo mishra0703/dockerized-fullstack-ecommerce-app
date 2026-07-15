@@ -14,7 +14,17 @@ jobs:
         with:
             node_version: 20
             run_tests: true
-        
+    
+    dependency_test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Code Checkout
+              uses: actions/checkout@v4
+              
+            - name: Check Dependencies for Vulnerabilities
+              uses: actions/dependency-review-action@v4
+              with:
+                fail-on-severity: critical
 
     pr_comment:
         runs-on: ubuntu-latest
