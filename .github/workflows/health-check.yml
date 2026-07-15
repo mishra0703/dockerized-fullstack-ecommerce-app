@@ -20,14 +20,6 @@ jobs:
             ports:
                 - 6379:6379
         steps:
-            # - name: Fetch Public IP
-            #   id: ip
-            #   run: |
-            #     PUBLIC_IP=$(curl -s https://ifconfig.me)
-            #     echo "runner_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
-            #     echo "The runner's public IP is $PUBLIC_IP"
-
-
             - name: Creating .env file
               run: |
                 cat <<EOF > .env
