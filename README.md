@@ -1,11 +1,24 @@
 # MERN E-Commerce Store
 
-A full-stack e-commerce web application built with the MERN stack and fully Dockerized for production deployment.
+A full-stack e-commerce web application built with the MERN stack, fully Dockerized, and shipped through an automated CI/CD pipeline with built-in DevSecOps controls — vulnerability scanning, secret detection, and least-privilege permissions enforced on every push.
 
-![Docker](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
-![Node.js](https://img.shields.io/badge/Node.js-20-green?logo=node.js)
-![MongoDB](https://img.shields.io/badge/MongoDB-7-green?logo=mongodb)
-![Redis](https://img.shields.io/badge/Redis-7-red?logo=redis)
+
+
+[![CI Pipeline](https://github.com/mishra0703/dockerized-fullstack-ecommerce-app/actions/workflows/main-pipeline.yml/badge.svg)](https://github.com/mishra0703/dockerized-fullstack-ecommerce-app/actions/workflows/main-pipeline.yml)
+
+
+[![Deploy App](https://github.com/mishra0703/dockerized-fullstack-ecommerce-app/actions/workflows/deploy.yml/badge.svg)](https://github.com/mishra0703/dockerized-fullstack-ecommerce-app/actions/workflows/deploy.yml) 
+
+
+[![Scheduled HealthCheck](https://github.com/mishra0703/dockerized-fullstack-ecommerce-app/actions/workflows/health-check.yml/badge.svg)](https://github.com/mishra0703/dockerized-fullstack-ecommerce-app/actions/workflows/health-check.yml)
+
+
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI%2FCD-2088FF?logo=githubactions&logoColor=white)
+![Trivy](https://img.shields.io/badge/Trivy-image_scanning-1904DA?logo=aquasecurity&logoColor=white)
 
 ---
 
@@ -44,6 +57,40 @@ A production-ready e-commerce platform with full shopping and admin functionalit
 | Payments | Stripe |
 | Image Storage | Cloudinary |
 | Containerization | Docker, Docker Compose |
+| CI/CD | GitHub Actions |
+| Security Scanning | Trivy, GitHub Dependency Review, GitHub Secret Scanning & Push Protection |
+
+---
+
+## CI/CD & DevSecOps Pipeline
+
+Every push and pull request runs through an automated pipeline built entirely with reusable GitHub Actions workflows. Security gates are enforced at each stage — a vulnerable dependency or a critical container vulnerability blocks the pipeline before an image ever reaches Docker Hub.
+
+```
+Pull Request opened
+  └─ Build & test
+  └─ Dependency vulnerability review   (blocks PR on vulnerable packages)
+  └─ PR checks pass / fail
+
+Merge to main
+  └─ Build & test
+  └─ Docker image build
+  └─ Trivy image scan                 (fails the pipeline on CRITICAL vulnerabilities)
+  └─ Push to Docker Hub               (only runs if the scan passes)
+  └─ Deploy                           (environment: production)
+
+Always active, repo-wide
+  └─ GitHub secret scanning
+  └─ Push protection for secrets       (blocks commits containing exposed credentials)
+```
+
+**Design decisions worth noting:**
+
+- **Reusable workflows** — build/test, Docker build, and image scanning are each isolated into their own reusable `.yml` files and composed together in a single orchestrating pipeline, rather than duplicating steps across jobs.
+- **Fail-closed image publishing** — the image is built locally on the runner, scanned by Trivy in place, and only pushed to Docker Hub if the scan step succeeds. A failed scan halts the job before credentials are even used to authenticate with Docker Hub.
+- **Least-privilege permissions** — each workflow explicitly declares the minimum `permissions:` it needs (e.g. `contents: read`, `pull-requests: write` only where a job posts PR comments), instead of relying on the broad default token scope.
+- **SHA-based image tagging** — every build is tagged with both `latest` and a short commit SHA, so any image pushed to Docker Hub can be traced back to the exact commit that produced it.
+- **Deployment stage** — the pipeline includes a deployment job wired up to a `production` GitHub Environment; the actual deployment target is being finalized next.
 
 ---
 
@@ -83,21 +130,20 @@ Create a `.env` file in the project root. MongoDB and Redis are handled internal
 
 ```env
 # JWT Secrets (generate two random strings)
-ACCESS_TOKEN_SECRET=our_random_secret
-REFRESH_TOKEN_SECRET=our_random_secret
+ACCESS_TOKEN_SECRET=your_random_secret
+REFRESH_TOKEN_SECRET=your_random_secret
 
 # Cloudinary (https://cloudinary.com → Dashboard)
-CLOUDINARY_CLOUD_NAME=our_cloud_name
-CLOUDINARY_API_KEY=our_api_key
-CLOUDINARY_API_SECRET=our_api_secret
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 
 # Stripe (https://dashboard.stripe.com → Developers → API Keys)
 STRIPE_SECRET_KEY=sk_test_...
 
-# Our app's public URL (used for Stripe redirect URLs)
-CLIENT_URL=http://our-ec2-server-public-ip:5000
+# App's public URL (used for Stripe redirect URLs)
+CLIENT_URL=http://your-ec2-server-public-ip:5000
 ```
-
 
 ---
 
@@ -123,7 +169,6 @@ App is now running at **http://your-ec2-server-public-ip:5000**
 
 ---
 
-
 ## Setting Up Admin Access
 
 After creating an account through the app, promote it to admin via the MongoDB shell:
@@ -144,7 +189,6 @@ Log out and log back in — the admin dashboard will now be accessible.
 
 ---
 
-
 ## Testing Payments
 
 Use Stripe's test card numbers:
@@ -162,4 +206,4 @@ Use any future expiry date and any 3-digit CVC.
 
 This project is based on [mern-ecommerce](https://github.com/burakorkmez/mern-ecommerce) by [burakorkmez](https://github.com/burakorkmez).
 
-Dockerized and extended by [Prem Mishra](https://github.com/mishra0703) — added multi-stage Dockerfile, Docker Compose with healthchecks, named volumes, and production deployment setup on AWS EC2.
+Dockerized, secured, and automated by [Prem Mishra](https://github.com/mishra0703) — added a multi-stage Dockerfile, Docker Compose with healthchecks, named volumes, and a full GitHub Actions CI/CD pipeline with dependency review, Trivy image scanning, and secret-scanning protections, deployed on AWS EC2.
