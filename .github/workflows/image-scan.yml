@@ -19,3 +19,11 @@ jobs:
                 image-ref: ${{ vars.DOCKERHUB_USERNAME }}/ecommerce-fullstack-webapp:latest
                 severity: 'CRITICAL,HIGH'
                 exit-code: '1'
+
+            - name: Upload Scan Report Artifact
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: image-scan-report
+                path: trivy-report.txt
+                retention-days: 7  
