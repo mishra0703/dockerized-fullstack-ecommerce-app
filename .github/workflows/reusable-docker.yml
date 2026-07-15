@@ -14,30 +14,59 @@ on:
                 required: true
             Dockerhub_Token:
                 required: true                
+        outputs:
+            image_url:
+                value: ${{ jobs.build_scan_push.outputs.image_url }}
 
 
 jobs:
-    Image_Build_and_Push:
+    build_scan_push:
         runs-on: ubuntu-latest
         outputs:
             image_url: ${{ steps.dockerhub_image_url.outputs.image_url }} 
         steps:
             - name: Code Checkout
               uses: actions/checkout@v4
-            
+              
+            - name: Building Docker Image
+              uses: docker/build-push-action@v6
+              with:
+                context: .
+                push: false
+                tags: ${{ inputs.tags }}                        
+                
+            - name: Trivy Docker Image Scanner
+              uses: aquasecurity/trivy-action@v0.36.0
+              with:
+                image-ref: ${{ inputs.image_name }}:latest
+                output: 'trivy-report.txt'  
+                severity: 'CRITICAL'
+                exit-code: '1'
+
+            - name: Upload Scan Report Artifact
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                name: image-scan-report
+                path: trivy-report.txt
+                retention-days: 7  
+                
+
             - name: Docker Login 
               uses: docker/login-action@v3
               with:
                 username: ${{ secrets.Dockerhub_Username }}
                 password: ${{ secrets.Dockerhub_Token }}              
 
-            - name: Building & Pushing Image to Dockerhub
+
+            - name: Pushing Docker Image
               uses: docker/build-push-action@v6
               with:
                 context: .
                 push: true
-                tags: ${{ inputs.tags }}                        
+                tags: ${{ inputs.tags }}  
+
 
             - name: Set image_url output
               id: dockerhub_image_url
-              run: echo "image_url=docker.io/${{ inputs.image_name }}:latest" >> "$GITHUB_OUTPUT"                
+              run: echo "image_url=docker.io/${{ inputs.image_name }}:latest" >> "$GITHUB_OUTPUT"
