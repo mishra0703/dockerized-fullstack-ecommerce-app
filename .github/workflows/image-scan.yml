@@ -17,6 +17,7 @@ jobs:
               uses: aquasecurity/trivy-action@v0.36.0
               with:
                 image-ref: ${{ vars.DOCKERHUB_USERNAME }}/ecommerce-fullstack-webapp:latest
+                output: 'trivy-report.txt'  
                 severity: 'CRITICAL'
                 exit-code: '1'
 
